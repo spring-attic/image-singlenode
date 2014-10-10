@@ -16,17 +16,17 @@ To retrieve the shell image execute the following :
 ### Start the singlenode
 To start it, you just need to execute the following command:
 
-        docker run --name singlenode \
-            -d \
-            -p 9393:9393\
-            springxd/singlenode
+    docker run --name singlenode \
+        -d \
+        -p 9393:9393 \
+        springxd/singlenode
 
 
-> Note how we exposed the `9393` port above. This is the http port that will receive http requests from the shell.
+Note how we exposed the `9393` port above. This is the http port that will receive http requests from the shell.
 
 Now let's observe singlenode's log by executing the following:
 
-    sudo docker logs -f singlenode
+    docker logs -f singlenode
 
 ### Start the shell
 Now from a new terminal lets start the shell:
@@ -34,7 +34,7 @@ Now from a new terminal lets start the shell:
         docker run --name shell \
             -it \
             springxd/shell
-You should see the following prompt :
+You should see the following prompt, especially if your docker daemon is not running on localhost (*e.g.* using boot2docker):
 ```
  _____                           __   _______
 /  ___|          (-)             \ \ / /  _  \
@@ -59,7 +59,7 @@ To connect to the singlenode execute the following command from the prompt:
 ```
 server-unknown:> admin config server http://<host>:9393
 ```
-> Replacing &lt;host&gt; with your host running Docker.
+Replacing `<host>` with your host running Docker.
 
 ## Create a ticktock stream
 In this simple example, the time source simply sends the current time as a message each second, and the log sink outputs it using the logging framework at the WARN logging level.
@@ -83,7 +83,7 @@ To destroy the stream go back to the shell and from the ***xd:>*** prompt, type 
 ```
 stream destroy ticktock
 ```
-> It is also possible to stop and restart the stream instead, using the undeploy and deploy commands. 
+It is also possible to stop and restart the stream instead, using the undeploy and deploy commands. 
 
 ## Create a http source stream
 In this example, we will create a http source that will listen for http posts on the 9000 port and will write the results to our log.
@@ -99,30 +99,32 @@ Now lets start up our singlenode with the 9000 port open and this time will set 
 
         docker run --name httpSourceTest \
             -d \
-            -p 9393:9393\
-            -p 9000:9000\
+            -p 9393:9393 \
+            -p 9000:9000 \
             springxd/singlenode
+
 Again now let's monitor our httpSourceTest instance by executing the following:
 
     sudo docker logs -f httpSourceTest
-> Notice we are not restarting our shell.  This is because the shell is not making a sustained connection to the singlenode, but rather executing individual rest calls.  This behavior will change once you invoke XD security.
+
+Notice we are not restarting our shell.  This is because the shell is not making a sustained connection to the singlenode, but rather executing individual rest calls.
 
 So to create the stream to receive http posts, go to the the shell and from the ***xd:>*** prompt, type the following and press ***return***:
 ```
-stream create httpsource --definition "http|log" --deploy
+stream create httpsource --definition "http | log" --deploy
 ```
-Now lets post a http "hello world" message to XD httpSourceTest.  From the shell ***xd:>*** prompt, type the following and press ***return***
+Now lets post a http "hello world" message to XD httpSourceTest.  From the shell ***xd:>*** prompt, type the following and press ***return*** (you could also use `curl -d` if you wanted).
 ```
 http post --target http://<host>:9000 --data "hello world"
 ```
-> Replacing &lt;host&gt; with your host running Docker.
+Replacing `<host>` with your host running Docker.
 
 The result you will see in the httpSourceTest log will be:
 ```
 21:06:08,208  INFO pool-11-thread-4 sink.httpsource - hello world
 ```
 ## Writing data to a file
-Continuing with theme above where we receive data via http, we will replace the log sink with a file sink.  By default XD will write all files to the /tmp/xd/output directory.  But in order for us to view the resulting file, we will mount a directory on our machine to the /tmp/xd/output directory in the container.  
+Continuing with theme above where we receive data via http, we will replace the log sink with a file sink.  By default XD will write all files to the `/tmp/xd/output` directory.  But in order for us to view the resulting file, we will mount a directory on our machine to the `/tmp/xd/output` directory in the container.  
 
 ### Cleanup
 First lets stop our last example.  
@@ -131,31 +133,33 @@ First lets stop our last example.
 ```
 docker stop httpSourceTest
 ```
-### Create the stream with a http source and file sink
-Now when we start our singlenode we will mount a local directory to the /tmp/xd/output directory in the container.
 
-        docker run --name fileSinkTest \
-            -d \
-            -p 9393:9393\
-            -p 9000:9000\
-            -v <dir on your machine>:/tmp/xd/output
-            springxd/singlenode
-> Replacing &lt;dir on your machine&gt; with your with a directory on your local machine.
+### Create the stream with a http source and file sink
+Now when we start our singlenode we will mount a local directory to the `/tmp/xd/output` directory in the container.
+
+    docker run --name fileSinkTest \
+        -d \
+        -p 9393:9393 \
+        -p 9000:9000 \
+        -v <dir on your machine>:/tmp/xd/output \
+        springxd/singlenode
+
+Replacing `<dir on your machine>` with a directory on your docker machine.
 
 So to create the stream that will receive http posts and write the results to a file, go to the the shell and from the ***xd:>*** prompt, type the following and press ***return***:
 ```
-stream create httpfilestream --definition "http|file" --deploy
+stream create httpfilestream --definition "http | file" --deploy
 ```
-Now lets post a http "hello world" message to XD fileSinkTest and have it write the result to /tmp/xd/output/httpfilestream.out file.  From the shell ***xd:>*** prompt, type the following and press ***return***
+Now lets post a http "hello world" message to XD fileSinkTest and have it write the result to `/tmp/xd/output/httpfilestream.out` file. From the shell ***xd:>*** prompt, type the following and press ***return***
 
 ```
 http post --target http://<host>:9000 --data "hello world"
 ```
-> Replacing &lt;host&gt; with your host running Docker.
+Replacing `<host>` with your host running Docker.
 
-From a new terminal you should be able to view the output file and it will be located in your ***&lt;dir on your machine&gt;***/httpfilestream.out 
+From a new terminal you should be able to view the output file and it will be located in your `<dir on your docker machine>/httpfilestream.out` 
 
-> Unless a dir is specified for the file sink it will always write its results to the /tmp/xd/output directory.  Also if no file name is specified it will use the stream name as the base for the output file name.   So in this case our stream name was httpfilestream and thus the files name will be httpfilestream.out
+Unless a dir is specified for the file sink it will always write its results to the `/tmp/xd/output` directory.  Also if no file name is specified it will use the stream name as the base for the output file name.   So in this case our stream name was httpfilestream and thus the files name will be httpfilestream.out
 
 # Additional Resources
 To read more about the modules (sources, processors, sinks & jobs) that are available to you from XD as well as the Docker XD Guide please checkout XD's wiki at https://github.com/spring-projects/spring-xd/wiki.   
