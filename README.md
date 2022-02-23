@@ -1,3 +1,5 @@
+# image-singlenode is no longer actively maintained by VMware, Inc.
+
 # Spring XD Singlenode
 
 The single node docker image is the easiest XD deployment in which to get started. It runs everything you need in a single container. In this README we will discuss how to deploy the singlenode and how to create a series of basic streams.  To do this we will also use the XD shell.  The shell is a more user-friendly front end to the REST API which Spring XD exposes to clients. 
